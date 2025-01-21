@@ -46,6 +46,7 @@ struct Model;
 struct State;
 struct Search;
 struct Tokenizer;
+struct LogitsProcessor;
 
 template <typename T>
 DeviceSpan<T> WrapTensor(DeviceInterface& device, OrtValue& value) {
@@ -60,6 +61,7 @@ enum struct DeviceType {
   CUDA,
   DML,
   WEBGPU,
+  QNN,
 };
 
 std::string to_string(DeviceType device_type);
@@ -103,6 +105,10 @@ struct GeneratorParams : std::enable_shared_from_this<GeneratorParams>, LeakChec
 
   void SetInputs(const NamedTensors& inputs);
 
+  std::string guidance_type;  // e.g. json_schema or regex
+  std::string guidance_data;  // e.g. rules data in json_schema or regex
+  void SetGuidance(std::string_view type, std::string_view data);
+
  private:
   bool is_cuda_graph_enabled_{};
 };
@@ -111,7 +117,7 @@ struct Generator : LeakChecked<Generator> {
   Generator(const Model& model, const GeneratorParams& params);
 
   bool IsDone() const;
-  void AppendTokens(const cpu_span<int32_t> input_ids);
+  void AppendTokens(cpu_span<const int32_t> input_ids);
   void GenerateNextToken();
   void RewindToLength(size_t new_length);  // Rewind state to new_length
   DeviceSpan<float> GetLogits();
@@ -124,10 +130,12 @@ struct Generator : LeakChecked<Generator> {
   std::shared_ptr<const Model> model_;
   std::unique_ptr<State> state_;
   std::unique_ptr<Search> search_;
+  std::unique_ptr<LogitsProcessor> logits_processor_;
   bool computed_logits_{};  // Set to true in ComputeLogits() and false after appending a token to ensure a 1 to 1 call ratio
 
  private:
-  DeviceSpan<int32_t> AllocateInputIdsOnDevice(const cpu_span<int32_t> input_ids);
+  DeviceSpan<int32_t> AllocateInputIdsOnDevice(cpu_span<const int32_t> input_ids);
+  void AuxAppendTokens(cpu_span<const int32_t> input_ids);
   void ComputeLogits(DeviceSpan<int32_t> next_tokens);
   enum Action { standard,   // Default, set in any other case
                 generated,  // Set after GenerateNextToken

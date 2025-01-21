@@ -130,6 +130,8 @@ def _parse_args():
 
     parser.add_argument("--use_dml", action="store_true", help="Whether to use DML. Default is to not use DML.")
 
+    parser.add_argument("--use_guidance", action="store_true", help="Whether to add guidance support. Default is False.")
+    
     # The following options are mutually exclusive (cross compiling options such as android, ios, etc.)
     platform_group = parser.add_mutually_exclusive_group()
     platform_group.add_argument("--android", action="store_true", help="Build for Android")
@@ -229,13 +231,11 @@ def _validate_build_dir(args: argparse.Namespace):
             # also tweak build directory name for mac builds
             target_sys = "macOS"
 
-        # set to a config specific build dir if no build_dir specified from command arguments
-        args.build_dir = Path("build") / target_sys / args.config
+        args.build_dir = Path("build") / target_sys
 
+    # set to a config specific build dir. it should exist unless we're creating the cmake setup
     is_strict = not args.update
-    # Use user-specified build_dir and ignore args.config
-    # This is to better accommodate the existing cmake presets which can uses arbitrary paths.
-    args.build_dir = args.build_dir.resolve(strict=is_strict)
+    args.build_dir = args.build_dir.resolve(strict=is_strict) / args.config
 
 
 def _validate_cuda_args(args: argparse.Namespace):
@@ -479,6 +479,7 @@ def update(args: argparse.Namespace, env: dict[str, str]):
         f"-DUSE_DML={'ON' if args.use_dml else 'OFF'}",
         f"-DENABLE_JAVA={'ON' if args.build_java else 'OFF'}",
         f"-DBUILD_WHEEL={build_wheel}",
+        f"-DUSE_GUIDANCE={'ON' if args.use_guidance else 'OFF'}",
     ]
 
     if args.ort_home:
@@ -502,9 +503,7 @@ def update(args: argparse.Namespace, env: dict[str, str]):
     if args.ios or args.macos:
         platform_name = "macabi" if args.macos == "Catalyst" else args.apple_sysroot
         command += [
-            "-DENABLE_PYTHON=OFF",
-            "-DENABLE_TESTS=OFF",
-            "-DENABLE_MODEL_BENCHMARK=OFF",
+            "-DCMAKE_OSX_DEPLOYMENT_TARGET=" + args.apple_deploy_target,
             f"-DBUILD_APPLE_FRAMEWORK={'ON' if args.build_apple_framework else 'OFF'}",
             "-DPLATFORM_NAME=" + platform_name,
         ]
@@ -535,7 +534,12 @@ def update(args: argparse.Namespace, env: dict[str, str]):
             f"-DIPHONEOS_DEPLOYMENT_TARGET={args.apple_deploy_target}",
             # The following arguments are specific to the OpenCV toolchain file
             f"-DCMAKE_TOOLCHAIN_FILE={_get_opencv_toolchain_file()}",
+            "-DENABLE_PYTHON=OFF",
+            "-DENABLE_TESTS=OFF",
+            "-DENABLE_MODEL_BENCHMARK=OFF",
         ]
+        if args.use_guidance:
+            command += ["-DRust_CARGO_TARGET=aarch64-apple-ios-sim"]
 
     if args.macos == "Catalyst":
         if args.cmake_generator == "Xcode":
@@ -553,6 +557,9 @@ def update(args: argparse.Namespace, env: dict[str, str]):
             f"-DCMAKE_CC_FLAGS=--target={macabi_target}",
             f"-DCMAKE_CC_FLAGS_RELEASE=-O3 -DNDEBUG --target={macabi_target}",
             "-DMAC_CATALYST=1",
+            "-DENABLE_PYTHON=OFF",
+            "-DENABLE_TESTS=OFF",
+            "-DENABLE_MODEL_BENCHMARK=OFF",
         ]
 
     if args.arm64:

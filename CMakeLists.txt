@@ -47,6 +47,13 @@ include(cmake/check_webgpu.cmake)
 include(cmake/cxx_standard.cmake)
 
 add_compile_definitions(BUILDING_ORT_GENAI_C)
+
+if(USE_GUIDANCE)
+  add_compile_definitions(USE_GUIDANCE=1)
+else()
+  add_compile_definitions(USE_GUIDANCE=0)
+endif()
+
 if(MSVC)
   # set updated value for __cplusplus macro instead of 199711L
   add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>)
@@ -79,6 +86,7 @@ if(ENABLE_TESTS)
   endif()
 endif()
 
+find_package(Threads REQUIRED)
 
 if(WIN32)
   add_library(onnxruntime-genai SHARED ${generator_srcs} "${GENERATORS_ROOT}/dll/onnxruntime-genai.rc")
@@ -104,6 +112,8 @@ target_include_directories(onnxruntime-genai-static PUBLIC ${onnxruntime_extensi
 target_link_libraries(onnxruntime-genai PRIVATE onnxruntime_extensions)
 target_link_libraries(onnxruntime-genai-static PUBLIC onnxruntime_extensions)
 target_link_directories(onnxruntime-genai PRIVATE ${ORT_LIB_DIR})
+target_link_libraries(onnxruntime-genai PRIVATE Threads::Threads)
+target_link_libraries(onnxruntime-genai-static PUBLIC Threads::Threads)
 
 # we keep the shared libraries disconnected on Android as they will come from separate AARs and we don't want to force
 # the ORT version to match in both.
@@ -136,6 +146,19 @@ if(USE_CUDA AND CMAKE_CUDA_COMPILER)
     set_property(TARGET onnxruntime-genai-cuda APPEND_STRING PROPERTY LINK_FLAGS "-DEF:${GENERATORS_ROOT}/cuda/symbols.def")
   else()
     message(FATAL_ERROR "${target} unknown platform, need to specify shared library exports for it")
+  endif()
+endif()
+
+
+if(USE_GUIDANCE)
+  target_include_directories(onnxruntime-genai PUBLIC ${llguidance_SOURCE_DIR}/parser/)
+  target_include_directories(onnxruntime-genai-static PUBLIC ${llguidance_SOURCE_DIR}/parser/)
+  target_link_libraries(onnxruntime-genai PRIVATE llguidance_parser)
+  target_link_libraries(onnxruntime-genai-static PUBLIC llguidance_parser)
+  if (WIN32)
+    # bcrypt is needed for the rust std lib
+    target_link_libraries(onnxruntime-genai PRIVATE bcrypt)
+    target_link_libraries(onnxruntime-genai-static PRIVATE bcrypt)
   endif()
 endif()
 
