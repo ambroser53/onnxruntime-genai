@@ -13,14 +13,14 @@ It implements the generative AI loop for ONNX models, including pre and post pro
 
 See documentation at https://onnxruntime.ai/docs/genai.
 
-|Support matrix|Supported now|Under development|On the roadmap|
-|-|-|-|-|
-|Model architectures|  Gemma <br/> Llama * <br/> Mistral + <br/>Phi (language + vision)<br/>Qwen <br/>Nemotron <br/>|Whisper|Stable diffusion|
-|API| Python <br/>C# <br/>C/C++ <br/> Java ^ |Objective-C||
-|Platform| Linux <br/> Windows <br/>Mac ^ <br/>Android ^  ||iOS |||
-|Architecture|x86 <br/> x64 <br/> Arm64 ~ ||||
-|Hardware Acceleration|CUDA<br/>DirectML<br/>|QNN <br/> OpenVINO <br/> ROCm ||
-|Features|| Interactive decoding <br/> Customization (fine-tuning)| Speculative decoding |
+| Support matrix | Supported now | Under development | On the roadmap |
+| -------------- | ------------- | ----------------- | -------------- |
+| Model architectures | Gemma <br/> Llama * <br/> Mistral + <br/> Phi (language + vision) <br/> Qwen <br/> Nemotron <br/> Granite <br/> AMD OLMo | Whisper | Stable diffusion |
+| API | Python <br/> C# <br/> C/C++ <br/> Java ^ | Objective-C | |
+| Platform | Linux <br/> Windows <br/> Mac ^ <br/> Android ^ | | iOS |
+| Architecture | x86 <br/> x64 <br/> Arm64 ~ | | |
+| Hardware Acceleration | CUDA <br/> DirectML <br/> | QNN <br/> OpenVINO <br/> ROCm | |
+| Features | | Interactive decoding <br/> Customization (fine-tuning) | Speculative decoding |
 
 \* The Llama model architecture supports similar model families such as CodeLlama, Vicuna, Yi, and more.
 
@@ -32,7 +32,7 @@ See documentation at https://onnxruntime.ai/docs/genai.
 
 ## Installation
 
-See https://onnxruntime.ai/docs/genai/howto/install
+See [installation instructions](https://onnxruntime.ai/docs/genai/howto/install) or [build from source](https://onnxruntime.ai/docs/genai/howto/build-from-source.html)
 
 ## Sample code for Phi-3 in Python
 
