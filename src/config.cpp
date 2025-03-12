@@ -94,6 +94,8 @@ struct SessionOptions_Element : JSON::Element {
       v_.ep_context_enable = JSON::Get<bool>(value);
     else if (name == "use_env_allocators")
       v_.use_env_allocators = JSON::Get<bool>(value);
+    else if (name == "preferred_memory_allocator_type")
+      v_.preferred_memory_allocator_type = JSON::Get<std::string_view>(value);
     else
       throw JSON::unknown_value_error{};
   }
