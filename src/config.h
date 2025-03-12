@@ -42,6 +42,7 @@ struct Config {
     std::optional<std::string> ep_context_file_path;
     std::optional<std::string> log_id;
     std::optional<int> log_severity_level;
+    std::optional<std::string> preferred_memory_allocator_type;
     std::optional<std::string> enable_profiling;
     // TODO(baijumeswani): Sharing env allocators across sessions leads to crashes on windows and iOS.
     //                     Identify the reason for the crash to enable allocator sharing by default.

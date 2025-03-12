@@ -312,7 +312,8 @@ void Model::InitDeviceAllocator(OrtSession& session) {
     // for webgpu we only use device memory for kv_cache
     memory_info_device_ = OrtMemoryInfo::Create("WebGPU_Buffer", OrtAllocatorType::OrtDeviceAllocator, 0, OrtMemType::OrtMemTypeDefault);
     owned_allocator_device_ = Ort::Allocator::Create(session, *memory_info_device_);
-    allocator_kvcache_ = owned_allocator_device_.get();
+    allocator_device_ = owned_allocator_device_.get();
+    allocator_kvcache_ = allocator_device_;
   }
 #endif
 
@@ -405,6 +406,10 @@ void Model::CreateSessionOptionsFromConfig(const Config::SessionOptions& config_
 
   if (config_session_options.ep_context_file_path.has_value()) {
     session_options.SetEpContextFilePath(config_session_options.ep_context_file_path.value().c_str());
+  }
+
+  if (config_session_options.preferred_memory_allocator_type.has_value()) {
+    session_options.AddConfigEntry("ep.dml.preferred_memory_allocator_type", config_session_options.preferred_memory_allocator_type.value().c_str());
   }
 
   if (config_session_options.provider_options.empty() && config_session_options.use_env_allocators) {
